@@ -1,0 +1,315 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "metadata": {
+    "_generator": {
+      "name": "bicep",
+      "version": "0.30.3.12046",
+      "templateHash": "4494181844158049650"
+    }
+  },
+  "parameters": {
+    "vnetname": {
+      "type": "string",
+      "defaultValue": "devvnet"
+    },
+    "location": {
+      "type": "string",
+      "defaultValue": "[resourceGroup().location]"
+    },
+    "addressSpace": {
+      "type": "array",
+      "defaultValue": [
+        "10.0.0.0/16"
+      ]
+    },
+    "subnets": {
+      "type": "array",
+      "defaultValue": [
+        {
+          "name": "subnet1",
+          "addressPrefix": "10.0.0.0/24"
+        },
+        {
+          "name": "subnet2",
+          "addressPrefix": "10.0.1.0/24"
+        },
+        {
+          "name": "subnet3",
+          "addressPrefix": "10.0.2.0/24"
+        }
+      ]
+    },
+    "pulicip": {
+      "type": "string",
+      "defaultValue": "devpip01"
+    },
+    "niccard": {
+      "type": "string",
+      "defaultValue": "devnic01"
+    },
+    "nsg": {
+      "type": "string",
+      "defaultValue": "devnsg01"
+    },
+    "virtualmachine": {
+      "type": "string",
+      "defaultValue": "devvm01"
+    },
+    "vmSize": {
+      "type": "string",
+      "defaultValue": "Standard_DS1_v2"
+    },
+    "osDisk": {
+      "type": "string",
+      "defaultValue": "myosdisk"
+    },
+    "adminUsername": {
+      "type": "string",
+      "defaultValue": "azureuser123"
+    },
+    "adminPassword": {
+      "type": "securestring"
+    },
+    "datadisk1": {
+      "type": "string",
+      "defaultValue": "devdatadisk1"
+    },
+    "dataDisk1Sku": {
+      "type": "string",
+      "defaultValue": "Standard_LRS"
+    },
+    "datadisk1gb": {
+      "type": "int",
+      "defaultValue": 1024
+    },
+    "datadisk2": {
+      "type": "string",
+      "defaultValue": "devdatadisk2"
+    },
+    "dataDisk2Sku": {
+      "type": "string",
+      "defaultValue": "Standard_LRS"
+    },
+    "datadisk2gb": {
+      "type": "int",
+      "defaultValue": 512
+    }
+  },
+  "resources": [
+    {
+      "type": "Microsoft.Network/virtualNetworks",
+      "apiVersion": "2024-01-01",
+      "name": "[parameters('vnetname')]",
+      "location": "[parameters('location')]",
+      "properties": {
+        "copy": [
+          {
+            "name": "subnets",
+            "count": "[length(parameters('subnets'))]",
+            "input": {
+              "name": "[parameters('subnets')[copyIndex('subnets')].name]",
+              "properties": {
+                "addressPrefix": "[parameters('subnets')[copyIndex('subnets')].addressPrefix]"
+              }
+            }
+          }
+        ],
+        "addressSpace": {
+          "addressPrefixes": "[parameters('addressSpace')]"
+        }
+      }
+    },
+    {
+      "type": "Microsoft.Network/publicIPAddresses",
+      "apiVersion": "2024-01-01",
+      "name": "[parameters('pulicip')]",
+      "location": "[parameters('location')]",
+      "sku": {
+        "name": "Basic"
+      },
+      "properties": {
+        "publicIPAllocationMethod": "Dynamic"
+      }
+    },
+    {
+      "type": "Microsoft.Network/networkInterfaces",
+      "apiVersion": "2024-01-01",
+      "name": "[parameters('niccard')]",
+      "location": "[parameters('location')]",
+      "properties": {
+        "ipConfigurations": [
+          {
+            "name": "ipconfig1",
+            "properties": {
+              "privateIPAllocationMethod": "Dynamic",
+              "subnet": {
+                "id": "[reference(resourceId('Microsoft.Network/virtualNetworks', parameters('vnetname')), '2024-01-01').subnets[0].id]"
+              },
+              "publicIPAddress": {
+                "id": "[resourceId('Microsoft.Network/publicIPAddresses', parameters('pulicip'))]"
+              }
+            }
+          }
+        ],
+        "networkSecurityGroup": {
+          "id": "[resourceId('Microsoft.Network/networkSecurityGroups', parameters('nsg'))]"
+        }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/networkSecurityGroups', parameters('nsg'))]",
+        "[resourceId('Microsoft.Network/publicIPAddresses', parameters('pulicip'))]",
+        "[resourceId('Microsoft.Network/virtualNetworks', parameters('vnetname'))]"
+      ]
+    },
+    {
+      "type": "Microsoft.Network/networkSecurityGroups",
+      "apiVersion": "2024-01-01",
+      "name": "[parameters('nsg')]",
+      "location": "[parameters('location')]",
+      "properties": {
+        "securityRules": [
+          {
+            "name": "allowRDP",
+            "properties": {
+              "priority": 100,
+              "protocol": "Tcp",
+              "access": "Allow",
+              "direction": "Inbound",
+              "sourceAddressPrefix": "*",
+              "sourcePortRange": "*",
+              "destinationAddressPrefix": "*",
+              "destinationPortRange": "3389",
+              "description": "Allow RDP"
+            }
+          },
+          {
+            "name": "allowhttp",
+            "properties": {
+              "priority": 110,
+              "protocol": "Tcp",
+              "access": "Allow",
+              "direction": "Inbound",
+              "sourceAddressPrefix": "*",
+              "sourcePortRange": "*",
+              "destinationAddressPrefix": "*",
+              "destinationPortRange": "80",
+              "description": "Allow http"
+            }
+          },
+          {
+            "name": "allowhttps",
+            "properties": {
+              "priority": 120,
+              "protocol": "Tcp",
+              "access": "Allow",
+              "direction": "Inbound",
+              "sourceAddressPrefix": "*",
+              "sourcePortRange": "*",
+              "destinationAddressPrefix": "*",
+              "destinationPortRange": "443",
+              "description": "Allow https"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "type": "Microsoft.Compute/virtualMachines",
+      "apiVersion": "2022-03-01",
+      "name": "[parameters('virtualmachine')]",
+      "location": "[parameters('location')]",
+      "properties": {
+        "hardwareProfile": {
+          "vmSize": "[parameters('vmSize')]"
+        },
+        "storageProfile": {
+          "imageReference": {
+            "publisher": "MicrosoftWindowsServer",
+            "offer": "WindowsServer",
+            "sku": "2019-Datacenter",
+            "version": "latest"
+          },
+          "dataDisks": [
+            {
+              "lun": 1,
+              "name": "[parameters('datadisk1')]",
+              "createOption": "Attach",
+              "diskSizeGB": "[parameters('datadisk1gb')]",
+              "managedDisk": {
+                "id": "[resourceId('Microsoft.Compute/disks', parameters('datadisk1'))]"
+              }
+            },
+            {
+              "lun": 2,
+              "name": "[parameters('datadisk2')]",
+              "createOption": "Attach",
+              "diskSizeGB": "[parameters('datadisk2gb')]",
+              "managedDisk": {
+                "id": "[resourceId('Microsoft.Compute/disks', parameters('datadisk2'))]"
+              }
+            }
+          ],
+          "osDisk": {
+            "name": "[parameters('osDisk')]",
+            "caching": "ReadWrite",
+            "createOption": "FromImage",
+            "managedDisk": {
+              "storageAccountType": "Standard_LRS"
+            }
+          }
+        },
+        "osProfile": {
+          "computerName": "[parameters('virtualmachine')]",
+          "adminUsername": "[parameters('adminUsername')]",
+          "adminPassword": "[parameters('adminPassword')]",
+          "windowsConfiguration": {
+            "enableAutomaticUpdates": true
+          }
+        },
+        "networkProfile": {
+          "networkInterfaces": [
+            {
+              "id": "[resourceId('Microsoft.Network/networkInterfaces', parameters('niccard'))]"
+            }
+          ]
+        }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Compute/disks', parameters('datadisk1'))]",
+        "[resourceId('Microsoft.Compute/disks', parameters('datadisk2'))]",
+        "[resourceId('Microsoft.Network/networkInterfaces', parameters('niccard'))]"
+      ]
+    },
+    {
+      "type": "Microsoft.Compute/disks",
+      "apiVersion": "2023-10-02",
+      "name": "[parameters('datadisk1')]",
+      "location": "[parameters('location')]",
+      "sku": {
+        "name": "[parameters('dataDisk1Sku')]"
+      },
+      "properties": {
+        "creationData": {
+          "createOption": "Empty"
+        },
+        "diskSizeGB": "[parameters('datadisk1gb')]"
+      }
+    },
+    {
+      "type": "Microsoft.Compute/disks",
+      "apiVersion": "2023-10-02",
+      "name": "[parameters('datadisk2')]",
+      "location": "[parameters('location')]",
+      "sku": {
+        "name": "[parameters('dataDisk2Sku')]"
+      },
+      "properties": {
+        "creationData": {
+          "createOption": "Empty"
+        },
+        "diskSizeGB": "[parameters('datadisk2gb')]"
+      }
+    }
+  ]
+}

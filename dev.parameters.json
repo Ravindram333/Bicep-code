@@ -1,0 +1,75 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentParameters.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "vnetname": {
+            "value": "devvnet"
+        },
+        "location": {
+            "value": "eastus" 
+        },
+        "addressSpace": {
+            "value": [
+              "10.0.0.0/16"
+            ]
+        },
+        "subnets": {
+            "value": [
+              {
+                "name": "subnet1",
+                "addressPrefix": "10.0.0.0/24"
+              },
+              {
+                "name": "subnet2",
+                "addressPrefix": "10.0.1.0/24"
+              },
+              {
+                "name": "subnet3",
+                "addressPrefix": "10.0.2.0/24"
+              }
+            ]
+        },
+        "pulicip": {
+            "value": "devpip01"
+        },
+        "niccard": {
+            "value": "devnic01"
+        },
+        "nsg": {
+            "value": "devnsg01"
+        },
+        "virtualmachine": {
+            "value": "devvm01"
+        },
+        "vmSize": {
+            "value": "Standard_DS1_v2"
+        },
+        "osDisk": {
+            "value": "myosdisk"
+        },
+        "adminUsername": {
+            "value": "azureuser123"
+        },
+        "adminPassword": {
+            "value": "Ravindra@2503"
+        },
+        "datadisk1": {
+            "value": "devdatadisk1"
+        },
+        "dataDisk1Sku": {
+            "value": "Standard_LRS"
+        },
+        "datadisk1gb": {
+            "value": 1024
+        },
+        "datadisk2": {
+            "value": "devdatadisk2"
+        },
+        "dataDisk2Sku": {
+            "value": "Standard_LRS"
+        },
+        "datadisk2gb": {
+            "value": 512
+        }
+    }
+}
