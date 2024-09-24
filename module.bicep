@@ -24,7 +24,8 @@ param virtualmachine string = 'testvm01'
 param vmSize string = 'Standard_DS1_v2'
 param osDisk string = 'myosdisk'
 param adminUsername string = 'azureuser123'
-param adminPassword string = 'Ravindra@2503'
+@secure()
+param adminPassword string
 
 module test 'dev.bicep' = {
   name: 'testdeployment'
